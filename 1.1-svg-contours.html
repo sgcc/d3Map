@@ -1,10 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
+<svg width="600" height="600"  stroke="#fff"  stroke-width="0.5"></svg>
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/d3-contour.v1.min.js"></script>
 <head>
     <meta charset="UTF-8">
-    <title>$Title$</title>
+    <title>d3-contours</title>
 </head>
 <body>
-$END$
+<script>
+
+    var svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+    //生成随机数据
+    var data =[];
+    for(var i = 0;i<30;i++){
+        data.push({
+            x      :Math.round(Math.abs(d3.randomNormal(0,width)())),
+            y      :Math.round(Math.abs(d3.randomNormal(0,height)())),
+            value  :Math.random() * 10
+        });
+    };
+
+    var s = new Date().getTime();
+    var values = idw(data,width,height);
+    var e = new Date().getTime();
+    console.log('插值：'+(e-s)/1000+'秒');
+
+    var s1 = new Date().getTime();
+    var thresholds = 12;
+
+    var contours = d3.contours()
+        .size([width, height])
+        .thresholds(thresholds);
+
+    var color = d3.scaleLinear()
+        .domain([1,10])
+        .range(["green", "red"]);
+
+    //绘制等高线
+    svg.selectAll("path")
+        .data(contours(values))
+        .enter().append("path")
+        .attr("d", d3.geoPath(d3.geoIdentity()))
+        .attr("fill", function(d) {
+            return color(d.value);
+        });
+
+    //绘点
+    svg.append("g")
+        .attr("stroke", "red")
+        .selectAll("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; })
+        .attr("r", 2);
+
+    //绘标签
+    svg.append("g")
+        .attr("stroke", "white")
+        .selectAll("text")
+        .data(data)
+        .enter().append("text")
+        .attr("x", function(d) {
+            return d.x;})
+        .attr("y", function(d) {
+            return d.y;})
+        .style("size",2)
+        .style("font-style","宋体")
+        .text(function (d) {
+            return Math.round(d.value)
+        });
+
+    var e1 = new Date().getTime();
+    console.log('绘制：'+(e1-s1)/1000+'秒');
+
+    //idw 插值算法
+    function idw(data, width, height) {
+
+        var d = data;
+
+        //已有点初始二维数组
+        var dlen = d.length;
+        var matrixData = new Array(width * height);
+        for(var i = 0; i < dlen; i++) {
+            var point  = d[i];
+            matrixData[point.y * width +point.x] = point.value;
+        }
+
+        /**
+         * 插值矩阵数据,时间复杂度O(height*width*len)
+         * 当height = 356, width = 673, len = 26时为6229288
+         */
+        for(var i = 0,k1=0; i < height  ; i++) {
+            for(var j = 0; j <width ; j++,k1++) {
+                if(!matrixData[k1]) {
+                    var sum0 = 0, sum1 = 0;
+                    for(var k = 0; k < dlen; k++) {
+                        var dk = d[k];
+                        var dis = ((i-dk.y)*(i-dk.y) + (j-dk.x)*(j-dk.x));
+                        sum0 =   sum0 +  dk.value*1/dis;
+                        sum1 = sum1 +    1/dis;
+                    }
+                    if(sum1 != 0)
+                        matrixData[k1] = sum0/sum1;
+                    else
+                        matrixData[k1] = 1;
+                }
+            }
+        }
+
+        return matrixData;
+    }
+
+</script>
 </body>
 </html>
