@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<canvas width="960" height="500"></canvas>
+
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/d3-contour.v1.min.js"></script>
+<script src="lib/dat.gui.min.js"></script>
+<script src="js/contour2.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title>contour</title>
+</head>
+<body>
+<script>
+
+    var canvas = document.querySelector("canvas"),
+        width = 960,
+        height = 500,
+        context = canvas.getContext("2d");
+
+    var  mode = {};
+
+    mode.mapType        = 'heatmap';
+    mode.heatmap_line   = false;
+    mode.contour_isfull = false;
+    mode.drawpoint      = false;
+    mode.drawlable      = false;
+    mode.referenceValue = 5;
+    mode.mapAlpha       = 0.4;
+    mode.mapThresholds  = 10;
+
+
+    var co = new Psdb.Contour(context,width,height);
+
+    // GUI
+    var gui = new dat.GUI();
+
+    // 下拉框形式选择文案
+    gui.add(mode, 'mapType', [ 'heatmap', 'contour' ]).onChange( function () {
+        co.refreshMap(mode);
+    });
+
+    gui.add( mode, 'heatmap_line' ).onChange( function () {
+        co.refreshMap(mode);
+    });
+    gui.add( mode, 'contour_isfull' ).onChange( function () {
+        co.refreshMap(mode);
+    });
+
+    gui.add( mode, 'drawpoint' ).onChange( function () {
+        co.refreshMap(mode);
+    });
+    gui.add( mode, 'drawlable' ).onChange( function () {
+        co.refreshMap(mode);
+    });
+
+    gui.add( mode, 'referenceValue' , 2, 9).onChange( function () {
+        co.refreshMap(mode);
+    });
+    gui.add( mode, 'mapAlpha', 0.1, 1.0 ).onChange(function () {
+        co.refreshMap(mode);
+    });
+    gui.add( mode, 'mapThresholds', 5, 20 ).onChange(function () {
+        co.refreshMap(mode);
+    });
+
+
+    //生成随机数据
+    var data =[];
+    for(var i = 0;i<30;i++){
+        data.push({
+            x      :Math.round(Math.abs(d3.randomNormal(0,width)())),
+            y      :Math.round(Math.abs(d3.randomNormal(0,height)())),
+            value  :Math.random() * 10
+        });
+    };
+    co.initMap(mode,data);
+
+
+
+</script>
+</body>
+</html>
