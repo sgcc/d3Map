@@ -1,0 +1,39 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/topojson.v1.min.js"></script>
+<script>
+
+    var width = 1300,
+        height = 800;
+
+    //定义一个地图映射
+    var projection = d3.geoMercator()
+            .center([100, 37])
+            .scale(850)
+            .translate([width/2, height/2]);
+
+    //在页面中插入一个canvas元素，并设置宽高
+    var canvas = d3.select("body").append("canvas")
+            .attr("width", width)
+            .attr("height", height);
+
+    //获得canvas绘图上下文
+    var context = canvas.node().getContext("2d");
+
+    //定义一个路径生成器
+    var mapPath = d3.geoPath()
+            .projection(projection)
+            .context(context);
+
+    //加在数据开始渲染地图
+    d3.json("data/china.topojson", function(error, us) {
+        if (error) throw error;
+        //一次性绘制整个地图轮廓
+        mapPath(topojson.feature(us, us.objects.collection));
+        context.stroke();
+    });
+
+</script>

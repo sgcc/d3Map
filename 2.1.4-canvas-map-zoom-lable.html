@@ -1,0 +1,87 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/topojson.v1.min.js"></script>
+<script>
+
+    var width = 1400,
+        height = 900;
+
+    var projection = d3.geoMercator()
+            .center([100, 37])
+            .scale(850)
+            .translate([width/2, height/2]);
+
+    var canvas = d3.select("body").append("canvas")
+            .attr("width", width)
+            .attr("height", height);
+
+    var transform = d3.zoomIdentity;
+
+    var mapZoom = d3.zoom();
+    mapZoom.scaleExtent([1, 36]).on("zoom", zoomed);
+    function zoomed() {
+        transform = d3.event.transform;
+        render();
+    }
+
+    var context = canvas.node().getContext("2d");
+
+    var mapPath = d3.geoPath()
+            .projection(projection)
+            .context(context);
+
+    canvas
+            .call(mapZoom);
+
+    var mapColor =d3.scaleOrdinal(d3.schemeCategory20);
+    var countries =null;
+
+    d3.json("data/china.topojson", function(error, us) {
+        if (error) throw error;
+
+        countries = topojson.feature(us, us.objects.collection);
+        render()
+    });
+
+    function render() {
+        context.save();
+        context.clearRect(0, 0, width, height);
+        context.beginPath();
+        context.translate(transform.x, transform.y);
+        context.scale(transform.k, transform.k);
+        context.lineWidth=0.1;
+        context.globalAlpha=0.3;
+
+        countries.features.forEach(drawMapPath);
+        countries.features.forEach(drawMapText);
+
+        context.stroke();
+        context.fill();
+        context.restore();
+    }
+
+    //绘制地图省份
+    function drawMapText(d) {
+        context.beginPath();
+        context.fillStyle='black';
+        context.fillText(
+                d.properties.name,
+                projection(d.properties.cp)[0],projection(d.properties.cp)[1]
+        );
+    }
+
+    //绘制地图背景
+    function drawMapPath(d) {
+        context.beginPath();
+        var color = mapColor(parseInt(d.properties.id) );
+        context.fillStyle= color;
+        context.strokeStyle=color;
+        mapPath(d);
+        context.stroke();
+        context.fill();
+    }
+
+</script>

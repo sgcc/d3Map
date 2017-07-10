@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<svg width="600" height="600"  stroke="#fff"  stroke-width="0.5"></svg>
+<script src="../lib/d3.v4.min.js"></script>
+
+<head>
+    <meta charset="UTF-8">
+    <title>微博签到</title>
+</head>
+<body>
+<script>
+
+    var svg = d3.select("svg"),
+        width = +svg.attr("width"),
+        height = +svg.attr("height");
+
+    jsonFilePath = "../data/weibo.json";
+
+    d3.json(jsonFilePath, function(error, weibo) {
+        if (error) throw error;
+
+        weiboData = weibo.map(function (serieData, idx) {
+            var px = serieData[0] / 1000;
+            var py = serieData[1] / 1000;
+            var res = [[px, py]];
+
+            for (var i = 2; i < serieData.length; i += 2) {
+                var dx = serieData[i] / 1000;
+                var dy = serieData[i + 1] / 1000;
+                var x = px + dx;
+                var y = py + dy;
+                res.push([x.toFixed(2), y.toFixed(2), 1]);
+
+                px = x;
+                py = y;
+            }
+            return res;
+        });
+
+        console.log(weiboData.length);
+
+    });
+
+
+</script>
+</body>
+</html>

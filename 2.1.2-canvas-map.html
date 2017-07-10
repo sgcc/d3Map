@@ -1,0 +1,47 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/topojson.v1.min.js"></script>
+<script>
+
+    var width = 1300,
+        height = 800;
+
+    var projection = d3.geoMercator()
+            .center([100, 37])
+            .scale(850)
+            .translate([width/2, height/2]);
+
+    var canvas = d3.select("body").append("canvas")
+            .attr("width", width)
+            .attr("height", height);
+
+    var context = canvas.node().getContext("2d");
+
+    var mapPath = d3.geoPath()
+            .projection(projection)
+            .context(context);
+
+    var mapColor =d3.scaleOrdinal(d3.schemeCategory20);
+
+    d3.json("data/china.topojson", function(error, us) {
+        if (error) throw error;
+
+        var countries = topojson.feature(us, us.objects.collection);
+        countries.features.forEach(drawMapPath);
+    });
+
+    function drawMapPath(d) {
+        context.beginPath();
+        var color = mapColor(parseInt(d.properties.id) );
+        context.fillStyle= color;
+        context.strokeStyle=color;
+        context.globalAlpha=0.3;
+        mapPath(d);
+        context.stroke();
+        context.fill();
+    }
+
+</script>

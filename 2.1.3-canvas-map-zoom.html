@@ -1,0 +1,75 @@
+
+<!DOCTYPE html>
+<meta charset="utf-8">
+<body>
+<script src="lib/d3.v4.min.js"></script>
+<script src="lib/topojson.v1.min.js"></script>
+<script>
+
+    var width = 1300,
+        height = 800;
+
+    var projection = d3.geoMercator()
+            .center([100, 37])
+            .scale(850)
+            .translate([width/2, height/2]);
+
+    var canvas = d3.select("body").append("canvas")
+            .attr("width", width)
+            .attr("height", height);
+
+    var transform = d3.zoomIdentity;
+
+    //当地图缩放后，获得缩放变换，重新渲染地图
+    function zoomed() {
+        transform = d3.event.transform;
+        render();
+    }
+
+    var context = canvas.node().getContext("2d");
+
+    var mapPath = d3.geoPath()
+            .projection(projection)
+            .context(context);
+
+    //给地图添加缩放范围和监听事件
+    canvas
+            .call(d3.zoom().scaleExtent([1, 36]).on("zoom", zoomed));
+
+    var mapColor =d3.scaleOrdinal(d3.schemeCategory20);
+    var countries =null;
+
+    d3.json("data/china.topojson", function(error, us) {
+        if (error) throw error;
+        countries = topojson.feature(us, us.objects.collection);
+        render()
+    });
+
+    //在渲染程序中，对绘图上下文整体应用变换
+    function render() {
+        context.save();
+        context.clearRect(0, 0, width, height);
+        context.beginPath();
+        context.translate(transform.x, transform.y);
+        context.scale(transform.k, transform.k);
+        context.lineWidth=0.1;
+        context.globalAlpha=0.3;
+
+        countries.features.forEach(drawMapPath);
+
+        context.stroke();
+        context.fill();
+        context.restore();
+    }
+
+    function drawMapPath(d) {
+        context.beginPath();
+        var color = mapColor(parseInt(d.properties.id) );
+        context.fillStyle= color;
+        context.strokeStyle=color;
+        mapPath(d);
+        context.stroke();
+        context.fill();
+    }
+
+</script>
